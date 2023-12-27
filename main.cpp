@@ -1496,14 +1496,72 @@ int connectedComponents(vector<vector<int>> adj, int v) {
 	return count;
 }	
 
+vector<int>  dfsOfGraph(vector<vector<int>> adj, int v) {
+	vector<bool> visited(v, false);
+	vector<int> res;
+	for (int i = 0; i < v; i++) {
+		if (visited[i] == false) {
+			stack<int> st;
+			st.push(i);
+			visited[i] = true;
+			while (!st.empty()) {
+				int u = st.top();
+				st.pop();
+				res.push_back(u);
+				for (int j = 0; j < adj[u].size(); j++) {
+					if (visited[adj[u][j]] == false) {
+						visited[adj[u][j]] = true;
+						st.push(adj[u][j]);
+					}
+				}
+			}
+		}
+	}
+	return res;
+}
+void dfsOfGraph2Util(vector<vector<int>> adj, int u, vector<bool>& visited, vector<int>& res) {
+	visited[u] = true;
+	res.push_back(u);
+	for (int i = 0; i < adj[u].size(); i++) {
+		if (visited[adj[u][i]] == false) {
+			dfsOfGraph2Util(adj, adj[u][i], visited, res);
+		}
+	}
+}
+vector<int> dfsOfGraph2(vector<vector<int>> adj, int v) {
+	vector<bool> visited(v, false);
+	vector<int> res;
+	for (int i = 0; i < v; i++) { // for disconnected graph
+		if (visited[i] == false) {
+			dfsOfGraph2Util(adj, i, visited, res);
+		}
+	}
+	return res;
+}
+
+bool cycleInUndirectedGraphUtil(int u, vector<bool>& visited, vector<vector<int>> adj, int parent) {
+	visited[u] = true;
+	for (int i = 0; i < adj[u].size(); i++) {
+		if (visited[adj[u][i]] == false) {
+			if (cycleInUndirectedGraphUtil(adj[u][i], visited, adj, u)) return true;
+		}
+		else if (adj[u][i] != parent) return true;
+	}
+	return false;
+}
+bool cycleInUndirectedGraph(int v, vector<vector<int>> adj) {
+	vector<bool> visited(v, false);
+	for (int i = 0; i < v; i++) {
+		if (visited[i] == false) {
+			if(cycleInUndirectedGraphUtil(i, visited, adj, -1)) return true;
+		}
+	}
+	return false;
+}
 
 
 
 int main() {
-	/*Node* root = new Node(1);
-	root->left = new Node(2);
-	root->right = new Node(3);
-	cout<<sizeOfTree(root);*/
 	
 	return 0;
 }
