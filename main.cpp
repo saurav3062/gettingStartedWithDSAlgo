@@ -12,6 +12,7 @@
 #include<unordered_set>
 #include<unordered_map>
 #include <ranges>
+#define INF std::numeric_limits<int>::max()
 using namespace std;
 struct ListNode {
 	int val;
@@ -1558,6 +1559,217 @@ bool cycleInUndirectedGraph(int v, vector<vector<int>> adj) {
 	}
 	return false;
 }
+
+bool cycleInDirectedGraphUtil(int u, vector<bool>& visited, vector<bool>& recStack, vector<vector<int>> adj) {
+	visited[u] = true;
+	recStack[u] = true;
+	for (int i = 0; i < adj[u].size(); i++) {
+		if (visited[adj[u][i]] == false) {
+			if (cycleInDirectedGraphUtil(adj[u][i], visited, recStack, adj)) return true;
+		}
+		else if (recStack[adj[u][i]] == true) return true;
+	}
+	recStack[u] = false;
+	return false;
+}
+bool cycleInDirectedGraph(int v, vector<vector<int>> adj) {
+	vector<bool> visited(v, false);
+	vector<bool> recStack(v, false);
+	for (int i = 0; i < v; i++) {
+		if (visited[i] == false) {
+			if (cycleInDirectedGraphUtil(i, visited, recStack, adj)) return true;
+		}
+	}
+	return false;
+}
+
+void topologicalSortUtilUsingDFS(int u, vector<bool>& visited, vector<int>& res, vector<vector<int>> adj) {
+	visited[u] = true;
+	for (int i = 0; i < adj[u].size(); i++) {
+		if (visited[adj[u][i]] == false) {
+			topologicalSortUtilUsingDFS(adj[u][i], visited, res, adj);
+		}
+	}
+	res.push_back(u);
+} // complexity O(V+E) 
+vector<int> topologicalSortUsingDFS(int v, vector<vector<int>> adj) {
+	vector<bool> visited(v, false);
+	vector<int> res;
+	for (int i = 0; i < v; i++) {
+		if (visited[i] == false) {
+			topologicalSortUtilUsingDFS(i, visited, res, adj);
+		}
+	}
+	reverse(res.begin(), res.end());
+	return res;
+}
+
+vector<int> topologicalSortUsingBFS(int v, vector<vector<int>> adj) {
+	vector<int> indegree(v, 0);
+	for (int i = 0; i < v; i++) {
+		for (int j = 0; j < adj[i].size(); j++) {
+			indegree[adj[i][j]]++;
+		}
+	}
+	queue<int> q;
+	for (int i = 0; i < v; i++) {
+		if (indegree[i] == 0) q.push(i);
+	}
+	vector<int> res;
+	while (!q.empty()) {
+		int u = q.front();
+		q.pop();
+		res.push_back(u);
+		for (int i = 0; i < adj[u].size(); i++) {
+			indegree[adj[u][i]]--;
+			if (indegree[adj[u][i]] == 0) q.push(adj[u][i]);
+		}
+	}
+	return res;
+}
+
+int spanningTree(vector<vector<vector<int>>>& graph, int v) {
+	vector<bool> visited(v, false);
+	queue<pair<int, int>> q;
+	q.push({ 0, 0 });
+	int cost = 0;
+	while (!q.empty()) {
+		auto p = q.front();
+		q.pop();
+		int u = p.first;
+		int w = p.second;
+
+		if (!visited[u]) {
+			cost += w;
+			visited[u] = true;
+
+			for (const auto& edge : graph[u]) {
+				if (!visited[edge[0]]) {
+					q.push({ edge[0], edge[1] });
+				}
+			}
+		}
+	}
+
+	return cost;
+} // complexity O(V+E) prim's algorithm
+int spanningTree2(const vector<vector<vector<int>>>& graph, int v) {
+	unordered_set<int> visited;
+	queue<pair<int, int>> q;
+	q.push({ 0, 0 });
+	int cost = 0;
+
+	while (!q.empty()) {
+		auto p = q.front();
+		q.pop();
+		int u = p.first;
+		int w = p.second;
+
+		if (visited.find(u) == visited.end()) {
+			cost += w;
+			visited.insert(u);
+
+			for (const auto& edge : graph[u]) {
+				if (visited.find(edge[0]) == visited.end()) {
+					q.push({ edge[0], edge[1] });
+				}
+			}
+		}
+	}
+
+	return cost;
+}
+int spanningTree3(const vector<vector<vector<int>>>& graph, int v) {
+	vector<bool> visited(v, false);
+	priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+	pq.push({ 0, 0 });
+	int cost = 0;
+
+	while (!pq.empty()) {
+		auto p = pq.top();
+		pq.pop();
+		int u = p.second;
+		int w = p.first;
+
+		if (!visited[u]) {
+			cost += w;
+			visited[u] = true;
+
+			for (const auto& edge : graph[u]) {
+				if (!visited[edge[0]]) {
+					pq.push({ edge[1], edge[0] });
+				}
+			}
+		}
+	}
+
+	return cost;
+}
+
+vector<vector<int>> dijkstra(vector<vector<pair<int, int>>>& graph, int v, int src) {
+	vector<int> dist(v, INT_MAX);
+	vector<bool> visited(v, false);
+	dist[src] = 0;
+	for (int i = 0; i < v - 1; i++) {
+		int u = -1;
+		for (int j = 0; j < v; j++) {
+			if (!visited[j] && (u == -1 || dist[j] < dist[u])) u = j;
+		}
+		visited[u] = true;
+		for (const auto& edge : graph[u]) {
+			int v = edge.first;
+			int w = edge.second;
+			dist[v] = min(dist[v], dist[u] + w);
+		}
+	}
+	vector<vector<int>> res;
+	for (int i = 0; i < v; i++) {
+		res.push_back({ i, dist[i] });
+	}
+	return res;
+} // complexity O(V^2)
+
+struct Edge {
+	int destination;
+	int weight;
+};
+// Dijkstra's algorithm implementation
+vector<vector<int>> dijkstra(vector<vector<Edge>>& graph, int source) {
+	int V = graph.size();
+	vector<vector<int>> shortest_distances(V);
+
+	for (int i = 0; i < V; ++i) {
+		shortest_distances[i] = vector<int>(V, INF);
+	}
+
+	vector<bool> visited(V, false);
+
+	priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+	pq.push({ 0, source });
+
+	while (!pq.empty()) {
+		int u = pq.top().second;
+		pq.pop();
+
+		if (visited[u]) continue;
+		visited[u] = true;
+
+		for (const Edge& edge : graph[u]) {
+			int v = edge.destination;
+			int w = edge.weight;
+
+			if (!visited[v] && shortest_distances[source][u] != INF && shortest_distances[source][u] + w < shortest_distances[source][v]) {
+				shortest_distances[source][v] = shortest_distances[source][u] + w;
+				pq.push({ shortest_distances[source][v], v });
+			}
+		}
+	}
+
+	return shortest_distances;
+}
+
+
+
 
 
 
