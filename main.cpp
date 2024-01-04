@@ -54,6 +54,15 @@ void permute(string s, int l, int r) {
 		swap(s[l], s[i]);
 	}
 }
+void printPermutations(vector<string>& vec) {
+	sort(vec.begin(), vec.end());
+	do {
+		for (const string& str : vec) {
+			cout << str << " ";
+		}
+		cout << endl;
+	} while (next_permutation(vec.begin(), vec.end()));
+}
 
 bool isSafe(vector<vector<int>>& board, int row, int col) {
 	for (int i = 0; i < row; i++) {
@@ -1057,6 +1066,7 @@ Node* insertBSTIterative(Node* root, int key) {
 	if (parent == nullptr) parent = newnode;
 	else if (parent->data < key) parent->right = newnode;
 	else parent->left = newnode;
+	return root;
 }
 
 int minValue(Node* root) {
@@ -1766,15 +1776,714 @@ vector<vector<int>> dijkstra(vector<vector<Edge>>& graph, int source) {
 	}
 
 	return shortest_distances;
+} // complexity O(ElogV)
+vector<vector<int>> bellmanFord(vector<vector<int>>& graph, int v, int src) {
+	vector<int> dist(v, INT_MAX);
+	dist[src] = 0;
+	for (int i = 0; i < v - 1; i++) {
+		for (int j = 0; j < graph.size(); j++) {
+			int u = graph[j][0];
+			int v = graph[j][1];
+			int w = graph[j][2];
+			if (dist[u] != INT_MAX && dist[u] + w < dist[v]) dist[v] = dist[u] + w;
+		}
+	}
+	for (int j = 0; j < graph.size(); j++) {
+		int u = graph[j][0];
+		int v = graph[j][1];
+		int w = graph[j][2];
+		if (dist[u] != INT_MAX && dist[u] + w < dist[v]) {
+			cout << "Negative cycle found" << endl;
+			break;
+		}
+	}
+	vector<vector<int>> res;
+	for (int i = 0; i < v; i++) {
+		res.push_back({ i, dist[i] });
+	}
+	return res;
+} // complexity O(V*E)
+vector<vector<int>> floydWarshall(vector<vector<int>>& graph, int v) {
+	vector<vector<int>> dist(v, vector<int>(v, INT_MAX));
+	for (int i = 0; i < v; i++) {
+		dist[i][i] = 0;
+	}
+	for (int i = 0; i < graph.size(); i++) {
+		int u = graph[i][0];
+		int v = graph[i][1];
+		int w = graph[i][2];
+		dist[u][v] = w;
+	}
+	for (int k = 0; k < v; k++) {
+		for (int i = 0; i < v; i++) {
+			for (int j = 0; j < v; j++) {
+				if (dist[i][k] != INT_MAX && dist[k][j] != INT_MAX && dist[i][k] + dist[k][j] < dist[i][j]) dist[i][j] = dist[i][k] + dist[k][j];
+			}
+		}
+	}
+	return dist;
+} // complexity O(V^3)
+
+class DisJointUnionFind {
+	int* parent;
+	int* rank;
+	public:
+		DisJointUnionFind(int n) {
+			parent = new int[n];
+			rank = new int[n];
+			for (int i = 0; i < n; i++) {
+				parent[i] = i;
+				rank[i] = 0;
+			}
+		}
+		int find(int x) {
+			if (parent[x] == x) return x;
+			return parent[x] = find(parent[x]); // path compression
+		}
+		void unionSet(int x, int y) {
+			int s1 = find(x);
+			int s2 = find(y);
+			if (s1 != s2) {
+				if (rank[s1] < rank[s2]) parent[s1] = s2;
+				else if (rank[s1] > rank[s2]) parent[s2] = s1;
+				else {
+					parent[s2] = s1;
+					rank[s1]++;
+				}
+			}
+		} // complexity O(logn)
+};
+
+int minSpanningTree(vector<vector<int>>& graph, int v) {
+	sort(graph.begin(), graph.end(), [](vector<int>& a, vector<int>& b) {
+		return a[2] < b[2];
+	});
+	DisJointUnionFind dsu(v);
+	int cost = 0;
+	for (int i = 0; i < graph.size(); i++) {
+		int u = graph[i][0];
+		int v = graph[i][1];
+		int w = graph[i][2];
+		if (dsu.find(u) != dsu.find(v)) {
+			cost += w;
+			dsu.unionSet(u, v);
+		}
+	}
+	return cost;
+} // complexity O(ElogE) // kruskal's algorithm
+
+int minCoins(vector<int> coin, int sum) {
+	int n = coin.size();
+	vector<vector<int>> dp(n+1, vector<int>(sum+1, 0));
+	for(int i=0; i<=n; i++) dp[i][0] = 1;
+	for(int i=1; i<=n; i++){
+		for(int j=1; j<=sum; j++){
+			if(coin[i-1]<=j) dp[i][j] = dp[i][j-coin[i-1]] + dp[i-1][j];
+			else dp[i][j] = dp[i-1][j];
+		}
+	}
+	return dp[n][sum];
+} // complexity O(n*sum)
+
+int minCoins2(int sum, vector<int> coin) {
+	if(sum==0) return 0;
+	int res = INT_MAX;
+	for (int i = 0; i < coin.size(); i++) {
+		if (coin[i] <= sum) {
+			int subres = minCoins2(sum-coin[i], coin);
+			if(subres!=INT_MAX) res = min(res, subres+1);
+		}
+	}
+} // complexity O(2^n) 
+
+vector<int> zeroOneKnapsack(int W, vector<int> wt, vector<int> val, int n) {
+	vector<vector<int>> dp(n+1, vector<int>(W+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= W; j++) {
+			if(wt[i-1]<=j) dp[i][j] = max(val[i-1]+dp[i-1][j-wt[i-1]], dp[i-1][j]);
+			else dp[i][j] = dp[i-1][j];
+		}
+	}
+	vector<int> res;
+	int i=n, j=W;
+	while (i > 0 && j > 0) {
+		if(dp[i][j]==dp[i-1][j]) i--;
+		else {
+			res.push_back(wt[i-1]);
+			j -= wt[i-1];
+			i--;
+		}
+	}
+	return res;
+} // complexity O(n*W)
+
+int longestCommonSubsequence(string s1, string s2) {
+	int n = s1.size();
+	int m = s2.size();
+	vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if(s1[i-1]==s2[j-1]) dp[i][j] = 1 + dp[i-1][j-1];
+			else dp[i][j] = max(dp[i][j-1], dp[i-1][j]);
+		}
+	}
+	return dp[n][m];
+} // complexity O(n*m)
+
+int lcs(string s1, string s2, int n, int m) {
+	if(n==0 || m==0) return 0;
+	if(s1[n-1]==s2[m-1]) return 1 + lcs(s1, s2, n-1, m-1);
+	else return max(lcs(s1, s2, n, m-1), lcs(s1, s2, n-1, m));
+} // complexity O(2^n)
+
+int lcsBottomUp(string s1, string s2, int n, int m) {
+	vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if(s1[i-1]==s2[j-1]) dp[i][j] = 1 + dp[i-1][j-1];
+			else dp[i][j] = max(dp[i][j-1], dp[i-1][j]);
+		}
+	}
+	return dp[n][m];
+} // complexity O(n*m)
+
+int lcs2(const string& s1, const string& s2)
+{
+	int m = s1.length(), n = s2.length();
+	vector<int> db(0); // db is the vector storing the length of the longest common subsequence
+	// i and j are the length of s1 and s2
+	for (int i = 1; i <= m; ++i) {
+		int prev = db[0];
+		for (int j = 1; j <= n; ++j) {
+			int temp = db[j];
+			if (s1[i - 1] == s2[j - 1])
+				db[j] = 1 + prev;
+			else
+				db[j] = max(db[j - 1], db[j]);
+			prev = temp;
+		}
+	}
+
+	return db[n];
+} // complexity O(n*m) space complexity O(n) 
+
+int minInsertionAndDeletion(string s1, string s2) {
+	int n = s1.size();
+	int m = s2.size();
+	int lcs = longestCommonSubsequence(s1, s2);
+	int insertion = m - lcs;
+	int deletion = n - lcs;
+	return insertion + deletion;
+} // complexity O(n*m)
+
+int lengthOfSuperSequence(string s1, string s2) {
+	int n = s1.size();
+	int m = s2.size();
+	int lcs = longestCommonSubsequence(s1, s2);
+	return n + m - lcs;
+} // complexity O(n*m)
+
+int longestRepeatingSubsequence(string s1, string s2) {
+	int n = s1.size();
+	int m = s2.size();
+	vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if(s1[i-1]==s2[j-1] && i!=j) dp[i][j] = 1 + dp[i-1][j-1];
+			else dp[i][j] = max(dp[i][j-1], dp[i-1][j]);
+		}
+	}
+	return dp[n][m];
+} // complexity O(n*m)
+
+int longestPalindromicSubsequence(string s1, string s2) {
+	int n = s1.size();
+	int m = s2.size();
+	vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = m; j >= 1; j--) {
+			if(s1[i-1]==s2[j-1]) dp[i][j] = 1 + dp[i-1][j+1];
+			else dp[i][j] = max(dp[i][j+1], dp[i-1][j]);
+		}
+	}
+	return dp[n][1];
+} // complexity O(n*m)
+
+int longestPalindromicSubsequence2(string s1) {
+	int n = s1.size();
+	string s2 = s1;
+	reverse(s2.begin(), s2.end());
+	vector<vector<int>> dp(n+1, vector<int>(n+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = n; j >= 1; j--) {
+			if(s1[i-1]==s2[j-1]) dp[i][j] = 1 + dp[i-1][j+1];
+			else dp[i][j] = max(dp[i][j+1], dp[i-1][j]);
+		}
+	}
+	return dp[n][1];
+} // complexity O(n*m)
+
+int longestPalindromeSubseq(string s) {
+	int n = s.size();
+	vector<vector<int>> dp(n, vector<int>(n, 0));
+
+	for (int i = 0; i < n; ++i) {
+		dp[i][i] = 1; // All individual characters are palindromes of length 1
+	}
+
+	for (int len = 2; len <= n; ++len) {
+		for (int i = 0; i <= n - len; ++i) {
+			int j = i + len - 1;
+			if (s[i] == s[j]) {
+				dp[i][j] = 2 + (len == 2 ? 0 : dp[i + 1][j - 1]);
+			}
+			else {
+				dp[i][j] = max(dp[i][j - 1], dp[i + 1][j]);
+			}
+		}
+	}
+	return dp[0][n - 1];
+}
+int longestPalindromeSubseq2(string s) {
+	int n = s.length();
+	int dp[1001][1001];
+	memset(dp, 0, sizeof(dp));
+	for (int i = n; i > 0; i--)
+	{
+		dp[i][i] = 1;
+		for (int j = i + 1; j <= n; j++)
+		{
+			if (s[i - 1] == s[j - 1]) dp[i][j] = 2 + dp[i + 1][j - 1];
+			else dp[i][j] = max(dp[i + 1][j], dp[i][j - 1]);
+		}
+	}
+	return dp[1][n];
+}
+
+int minDis(string s1, string s2, int n, int m, vector<vector<int> >& dp)
+{
+
+	// If any string is empty,
+	// return the remaining characters of other string
+
+	if (n == 0)
+		return m;
+
+	if (m == 0)
+		return n;
+
+	// To check if the recursive tree
+	// for given n & m has already been executed
+
+	if (dp[n][m] != -1)
+		return dp[n][m];
+
+	// If characters are equal, execute
+	// recursive function for n-1, m-1
+
+	if (s1[n - 1] == s2[m - 1]) {
+		return dp[n][m] = minDis(s1, s2, n - 1, m - 1, dp);
+	}
+	// If characters are nt equal, we need to
+	// find the minimum cost out of all 3 operations.
+	// 1. insert 2.delete 3.replace
+	else {
+		int insert, del, replace; // temp variables
+
+		insert = minDis(s1, s2, n, m - 1, dp);
+		del = minDis(s1, s2, n - 1, m, dp);
+		replace = minDis(s1, s2, n - 1, m - 1, dp);
+		return dp[n][m]
+			= 1 + min(insert, min(del, replace));
+	}
+} // complexity O(n*m)
+
+int minDis2(string a, string b) {
+	int n = a.size();
+	int m = b.size();
+	vector<vector<int>> dp(n+1, vector<int>(m+1, 0));
+	for (int i = 0; i <= n; i++) dp[i][0] = i;
+	for (int i = 0; i <= m; i++) dp[0][i] = i;
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= m; j++) {
+			if(a[i-1]==b[j-1]) dp[i][j] = dp[i-1][j-1];
+			else dp[i][j] = 1 + min(dp[i-1][j], min(dp[i][j-1], dp[i-1][j-1]));
+		}
+	}
+	return dp[n][m];
+} // complexity O(n*m) bottom up approach
+
+int cutRod(vector<int> len, vector<int> price) {
+	int n = len.size();
+	int l = len.size();
+	vector<vector<int>> dp(n+1, vector<int>(l+1, 0));
+	for (int i = 1; i <= n; i++) {
+		for (int j = 1; j <= l; j++) {
+			if(len[i-1]<=j) dp[i][j] = max(price[i-1]+dp[i][j-len[i-1]], dp[i-1][j]);
+			else dp[i][j] = dp[i-1][j];
+		}
+	}
+	return dp[n][l];
+} // complexity O(n*l) 
+
+int maxSumSubMatrix(vector<vector<int>> mat) {
+	int n = mat.size();
+	int m = mat[0].size();
+	int res = INT_MIN;
+	for (int i = 0; i < n; i++) {
+		vector<int> temp(m, 0);
+		for (int j = i; j < n; j++) {
+			for (int k = 0; k < m; k++) {
+				temp[k] += mat[j][k];
+			}
+			int sum = 0;
+			int maxSum = INT_MIN;
+			for (int k = 0; k < m; k++) {
+				sum += temp[k];
+				if (sum < 0) sum = 0;
+				maxSum = max(maxSum, sum);
+			}
+			res = max(res, maxSum);
+		}
+	}
+	return res;
+} // complexity O(n^3)
+
+
+int matrixChainOrder1(int p[], int i, int j)
+{
+	if (i == j)
+		return 0;
+	int k;
+	int mini = INT_MAX;
+	int count;
+
+	// Place parenthesis at different places
+	// between first and last matrix, 
+	// recursively calculate count of multiplications 
+	// for each parenthesis placement 
+	// and return the minimum count
+	for (k = i; k < j; k++)
+	{
+		count = matrixChainOrder1(p, i, k)
+			+ matrixChainOrder1(p, k + 1, j)
+			+ p[i - 1] * p[k] * p[j];
+
+		mini = min(count, mini);
+	}
+
+	// Return minimum count
+	return mini;
+} // complexity O(2^n)
+
+int dp[100][100];
+int matrixChainMemoised(int* p, int i, int j)
+{
+	if (i == j)
+	{
+		return 0;
+	}
+	if (dp[i][j] != -1)
+	{
+		return dp[i][j];
+	}
+	dp[i][j] = INT_MAX;
+	for (int k = i; k < j; k++)
+	{
+		dp[i][j] = min(
+			dp[i][j], matrixChainMemoised(p, i, k)
+			+ matrixChainMemoised(p, k + 1, j)
+			+ p[i - 1] * p[k] * p[j]);
+	}
+	return dp[i][j];
+}
+int matrixChainOrder2(int* p, int n)
+{
+	int i = 1, j = n - 1;
+	return matrixChainMemoised(p, i, j);
+} // complexity O(n^3) 
+
+int matrixChainOrder(vector<int> p) {
+	int n = p.size();
+	vector<vector<int>> dp(n, vector<int>(n, 0));
+	for (int i = 1; i < n; i++) dp[i][i] = 0;
+	for (int len = 2; len < n; len++) {
+		for (int i = 1; i < n - len + 1; i++) {
+			int j = i + len - 1;
+			dp[i][j] = INT_MAX;
+			for (int k = i; k < j; k++) {
+				dp[i][j] = min(dp[i][j], dp[i][k] + dp[k + 1][j] + p[i - 1] * p[k] * p[j]);
+			}
+		}
+	}
+	return dp[1][n - 1];
+} // complexity O(n^3)
+
+int MatrixChainOrder(int p[], int n)
+{
+
+	/* For simplicity of the program, one
+	extra row and one extra column are
+	allocated in m[][]. 0th row and 0th
+	column of m[][] are not used */
+	
+	vector<vector<int>> m(n, vector<int>(n, 0));
+
+	int i, j, k, L, q;
+
+	/* m[i, j] = Minimum number of scalar
+	multiplications needed to compute the
+	matrix A[i]A[i+1]...A[j] = A[i..j] where
+	dimension of A[i] is p[i-1] x p[i] */
+
+	// cost is zero when multiplying
+	// one matrix.
+	for (i = 1; i < n; i++)
+		m[i][i] = 0;
+
+	// L is chain length.
+	for (L = 2; L < n; L++)
+	{
+		for (i = 1; i < n - L + 1; i++)
+		{
+			j = i + L - 1;
+			m[i][j] = INT_MAX;
+			for (k = i; k <= j - 1; k++)
+			{
+				// q = cost/scalar multiplications
+				q = m[i][k] + m[k + 1][j]
+					+ p[i - 1] * p[k] * p[j];
+				if (q < m[i][j])
+					m[i][j] = q;
+			}
+		}
+	}
+
+	return m[1][n - 1];
+}
+
+int minPalindromicPartition(string s) {
+	int n = s.size();
+	vector<vector<int>> dp(n, vector<int>(n, 0));
+	vector<vector<bool>> isPal(n, vector<bool>(n, false));
+	for (int i = 0; i < n; i++) {
+		isPal[i][i] = true;
+	}
+	for (int len = 2; len <= n; len++) {
+		for (int i = 0; i <= n - len; i++) {
+			int j = i + len - 1;
+			if (len == 2) isPal[i][j] = (s[i] == s[j]);
+			else isPal[i][j] = (s[i] == s[j]) && isPal[i + 1][j - 1];
+		}
+	}
+	for (int len = 2; len <= n; len++) {
+		for (int i = 0; i <= n - len; i++) {
+			int j = i + len - 1;
+			if (isPal[i][j]) dp[i][j] = 0;
+			else {
+				dp[i][j] = INT_MAX;
+				for (int k = i; k < j; k++) {
+					dp[i][j] = min(dp[i][j], dp[i][k] + dp[k + 1][j] + 1);
+				}
+			}
+		}
+	}
+	return dp[0][n - 1];
+} // complexity O(n^3)
+
+vector<int> maxDisjointIntervals(vector<vector<int>> intervals) {
+	sort(intervals.begin(), intervals.end(), [](vector<int>& a, vector<int>& b) {
+		return a[1] < b[1];
+	});
+	vector<int> res;
+	int i = 0;
+	res.push_back(i);
+	for (int j = 1; j < intervals.size(); j++) {
+		if (intervals[j][0] >= intervals[i][1]) {
+			res.push_back(j);
+			i = j;
+		}
+	}
+	return res;
+} // complexity O(nlogn)
+
+int wineSelling(std::vector<int>& a) {
+	int b = 0;
+	int s = a.size() - 1;
+	int ans = 0;
+
+	while (b < s) {
+		// If current house wants to sell wine
+		while (a[b] < 0) {
+			int sell = std::min(-a[b], a[s]); // Calculate the amount to sell
+			a[b] += sell; // Update selling house
+			a[s] -= sell; // Update buying house
+			ans += sell * (s - b); // Calculate work needed
+			if (a[s] == 0) s--; // Move left if the buying house is satisfied
+		}
+		b++; // Move right if the selling house is satisfied
+	}
+
+	return ans;
+} // complexity O(n)
+
+int minPlatforms(vector<int> arr, vector<int> dep) {
+	sort(arr.begin(), arr.end());
+	sort(dep.begin(), dep.end());
+	int i = 1, j = 0;
+	int res = 1;
+	int curr = 1;
+	while (i < arr.size() && j < dep.size()) {
+		if (arr[i] <= dep[j]) {
+			curr++;
+			i++;
+		}
+		else {
+			curr--;
+			j++;
+		}
+		res = max(res, curr);
+	}
+	return res;
+} // complexity O(nlogn)
+
+class TrieNode2 {
+public:
+	TrieNode2* children[2];
+
+	TrieNode2() {
+		children[0] = nullptr;
+		children[1] = nullptr;
+	}
+};
+
+class Trie2 {
+public:
+	TrieNode2* root;
+
+	Trie2() {
+		root = new TrieNode2();
+	}
+
+	void insert(int num) {
+		TrieNode2* curr = root;
+
+		for (int i = 31; i >= 0; --i) {
+			int bit = (num >> i) & 1;
+
+			if (!curr->children[bit]) {
+				curr->children[bit] = new TrieNode2();
+			}
+
+			curr = curr->children[bit];
+		}
+	}
+
+	bool search(int num) {
+		TrieNode2* curr = root;
+
+		for (int i = 31; i >= 0; --i) {
+			int bit = (num >> i) & 1;
+
+			if (!curr->children[bit]) {
+				return false;
+			}
+
+			curr = curr->children[bit];
+		}
+
+		return true;
+	}
+
+	int findMaxXOR(int num) {
+		TrieNode2* curr = root;
+		int maxXOR = 0;
+
+		for (int i = 31; i >= 0; --i) {
+			int bit = (num >> i) & 1;
+			int flip = 1 - bit;
+
+			if (curr->children[flip]) {
+				maxXOR |= (1 << i);
+				curr = curr->children[flip];
+			}
+			else {
+				curr = curr->children[bit];
+			}
+		}
+
+		return maxXOR;
+	}
+};
+
+class TrieNode {
+	TrieNode* children[26];
+	bool isEndOfWord;
+	public:
+		TrieNode() {
+		for (int i = 0; i < 26; i++) children[i] = nullptr;
+		isEndOfWord = false;
+		}
+	void insert(string s) {
+		TrieNode* curr = this;
+		for (int i = 0; i < s.size(); i++) {
+			int index = s[i] - 'a';
+			if (curr->children[index] == nullptr) curr->children[index] = new TrieNode();
+			curr = curr->children[index];
+		}
+		curr->isEndOfWord = true;
+	}
+	bool search(string s) {
+		TrieNode* curr = this;
+		for (int i = 0; i < s.size(); i++) {
+			int index = s[i] - 'a';
+			if (curr->children[index] == nullptr) return false;
+			curr = curr->children[index];
+		}
+		return curr->isEndOfWord;
+	}
+	bool startsWith(string s) {
+		TrieNode* curr = this;
+		for (int i = 0; i < s.size(); i++) {
+			int index = s[i] - 'a';
+			if (curr->children[index] == nullptr) return false;
+			curr = curr->children[index];
+		}
+		return true;
+	}
+};;
+
+int findMaximumXOR(vector<int>& nums) {
+	int max_xor = 0, mask = 0;
+
+	for (int i = 31; i >= 0; --i) {
+		mask |= (1 << i);
+		unordered_set<int> prefixes;
+
+		for (int num : nums) {
+			prefixes.insert(num & mask);
+		}
+
+		int possible_max = max_xor | (1 << i);
+
+		for (int prefix : prefixes) {
+			if (prefixes.count(possible_max ^ prefix)) {
+				max_xor = possible_max;
+				break;
+			}
+		}
+	}
+
+	return max_xor;
 }
 
 
 
-
-
-
 int main() {
+	vector<int> a = { 1, 2, 3, 4, 5 };
+	size_t s = a.size();
 	
-	return 0;
+	int ans;
+	return ans=0; // assigment and returing the value at the same time
 }
 
