@@ -110,8 +110,7 @@ bool isSafe(vector<vector<int>>& grid, int row,
 
 	for (int i = 0; i < 3; i++)
 		for (int j = 0; j < 3; j++)
-			if (grid[i + startRow][j +
-				startCol] == num)
+			if (grid[i + startRow][j + startCol] == num)
 				return false;
 
 	return true;
