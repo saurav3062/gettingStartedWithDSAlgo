@@ -43,7 +43,7 @@ int matrixPath(int n, int m) {
 		return 1;
 	return matrixPath(n - 1, m) + matrixPath(n, m - 1);
 }
-void permute(string s, int l, int r) {
+void permute(string& s, int l, int r) {
 	if (l == r) {
 		cout << s << endl;
 		return;
@@ -92,25 +92,60 @@ bool nQueen(vector<vector<int>>& board, int row) {
 	}
 	return false;
 }
-bool solveSudoku(vector<vector<int>>& board, int row, int col) {
-	if (row == board.size() - 1 && col == board.size())
+
+bool isSafe(vector<vector<int>>& grid, int row,
+	int col, int num)
+{
+
+	for (int x = 0; x <= 8; x++)
+		if (grid[row][x] == num)
+			return false;
+
+	for (int x = 0; x <= 8; x++)
+		if (grid[x][col] == num)
+			return false;
+
+	int startRow = row - row % 3,
+		startCol = col - col % 3;
+
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			if (grid[i + startRow][j +
+				startCol] == num)
+				return false;
+
+	return true;
+}
+
+bool solveSudoku(vector<vector<int>>& grid, int row, int col)
+{
+
+	if (row == grid.size() - 1 && col == grid.size())
 		return true;
-	if (col == board.size()) {
+
+	if (col == grid.size()) {
 		row++;
 		col = 0;
 	}
-	if (board[row][col] != 0)
-		return solveSudoku(board, row, col + 1);
-	for (int i = 1; i <= board.size(); i++) {
-		if (isSafe(board, row, col)) {
-			board[row][col] = i;
-			if (solveSudoku(board, row, col + 1))
+
+	if (grid[row][col] > 0)
+		return solveSudoku(grid, row, col + 1);
+
+	for (int num = 1; num <= grid.size(); num++)
+	{
+
+		if (isSafe(grid, row, col, num))
+		{
+
+			grid[row][col] = num;
+
+			if (solveSudoku(grid, row, col + 1))
 				return true;
 		}
-		board[row][col] = 0;
+		grid[row][col] = 0;
 	}
 	return false;
-} //  this code wont work refer geeks for geeks
+}
 void printBoard(vector<vector<int>>& board) {
 	for (int i = 0; i < board.size(); i++) {
 		for (int j = 0; j < board.size(); j++)
@@ -2480,10 +2515,8 @@ int findMaximumXOR(vector<int>& nums) {
 
 
 int main() {
-	vector<int> a = { 1, 2, 3, 4, 5 };
-	size_t s = a.size();
 	
-	int ans;
-	return ans=0; // assigment and returing the value at the same time
+	
+
 }
 
