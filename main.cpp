@@ -12,6 +12,7 @@
 #include<unordered_set>
 #include<unordered_map>
 #include <ranges>
+
 #define INF std::numeric_limits<int>::max()
 using namespace std;
 struct ListNode {
@@ -93,8 +94,8 @@ bool nQueen(vector<vector<int>>& board, int row) {
 	return false;
 }
 
-bool isSafe(vector<vector<int>>& grid, int row,
-	int col, int num)
+
+bool isSafe(vector<vector<int>>& grid, int row, int col, int num)
 {
 
 	for (int x = 0; x <= 8; x++)
@@ -265,7 +266,7 @@ void insertionSort(vector<int>& nums) {
 		}
 		nums[j+1] = temp;
 	}
-}
+} //complexity O(n^2)
 void selectionSort(vector<int>& nums) {
 	for (int i = 0; i < nums.size(); i++) {
 		int minIndex = i;
@@ -275,13 +276,13 @@ void selectionSort(vector<int>& nums) {
 		}
 		swap(nums[i], nums[minIndex]);
 	}
-}
+} // complexity O(n^2)
 
 int partition(vector<int>& nums, int low, int high) {
 	int pivot = nums[high];
 	int i = low - 1;
 	for (int j = low; j < high; j++) {
-		if (nums[j] < pivot) {
+		if (nums[j]< pivot) {
 			i++;
 			swap(nums[i], nums[j]);
 		}
@@ -325,6 +326,7 @@ void mergeSort(vector<int>& nums, int low, int high) {
 		merge(nums, low, mid, high);
 	}
 }
+
 int binarySearch(vector<int>& nums, int low, int high, int target) {
 	if (low <= high) {
 		int mid = low + (high - low) / 2;
@@ -382,6 +384,7 @@ int bSearch(vector<int>& num, int key) {
 	}
 	return -1;
 } // the array is sorted and rotated.
+
 void disElemWin(vector<int>& num, int k) {
 	unordered_map<int, int> fre;
 	for (int i = 0; i < k; i++)
@@ -399,10 +402,10 @@ void disElemWin(vector<int>& num, int k) {
 void insertHeap(vector<int>& ele, int val) {
 	int n = ele.size();
 	ele.push_back(val);
-	int i = n;
-	while (i > 0 && ele[(i - 1) / 2] < ele[i]) {
-		swap(ele[(i - 1) / 2], ele[i]);
-		i = (i - 1) / 2;
+	int i = ele.size() - 1;
+	while (i > 1 && ele[i] > ele[i / 2]) {
+		swap(ele[i], ele[i / 2]);
+		i = i / 2;
 	}
 } // insert in max heap
 void deleteHeap(vector<int>& ele) {
@@ -425,10 +428,11 @@ void deleteHeap(vector<int>& ele) {
 		}
 	}
 } // delete head in max heap
+
 void heapify(vector<int>& ele, int n, int i) {
 	int largest = i;
-	int l = 2 * i + 1;
-	int r = 2 * i + 2;
+	int l = 2 * i;
+	int r = 2 * i+1;
 	if (l<n && ele[l]>ele[largest])
 		largest = l;
 	if (r<n && ele[r]>ele[largest])
@@ -438,10 +442,14 @@ void heapify(vector<int>& ele, int n, int i) {
 		heapify(ele, n, largest);
 	}
 }
-void heapSort(vector<int>& ele) {
+void buildHeap(vector<int>& ele) {
 	int n = ele.size();
 	for (int i = n / 2 - 1; i >= 0; i--)
 		heapify(ele, n, i);
+} // build heap
+void heapSort(vector<int>& ele) {
+	buildHeap(ele);;
+	int n = ele.size();
 	for (int i = n - 1; i >= 0; i--) {
 		swap(ele[0], ele[i]);
 		heapify(ele, i, 0);
@@ -581,6 +589,7 @@ bool parenthesisMatching(string s) {
 	}
 	return st.empty();
 }
+
 int largestRectangleArea(vector<int>& heights) {
 	int n = heights.size();
 	stack<int> st;
@@ -597,42 +606,50 @@ int largestRectangleArea(vector<int>& heights) {
 	return maxArea;
 }
 
+vector<int> prevSmaller(vector<int>& nums) {
+	vector<int> res(nums.size(), -1);
+	stack<int> st;
+	for (int i = 0; i < nums.size(); i++) {
+		while (!st.empty() && nums[st.top()] >= nums[i]) {
+			st.pop();
+		}
+		res[i] = st.empty() ? -1 : st.top();
+		st.push(i);
+	}
+	return res;
+}
+
+vector<int> nextSmaller(vector<int>& nums) {
+	vector<int> res(nums.size(), nums.size());
+	stack<int> st;
+	for (int i = nums.size() - 1; i >= 0; i--) {
+		while (!st.empty() && nums[st.top()] >= nums[i]) {
+			st.pop();
+		}
+		res[i] = st.empty() ? nums.size() : st.top();
+		st.push(i);
+	}
+	return res;
+}
+
 int maxAreaa(vector<int> heights) {
 	int maxAns = 0;
 	int n = heights.size();
-	vector<int> prevSmaller(n, -1);
-	vector<int> nextSmaller(n, n);
+	vector<int> prev = prevSmaller(heights);
+	vector<int> next = nextSmaller(heights);
+
 	for (int i = 0; i < n; i++) {
-		int curr = (nextSmaller[i] - prevSmaller[i] - 1) * heights[i];
+		int curr = (next[i] - prev[i] - 1) * heights[i];
 		maxAns = max(maxAns, curr);
 	}
 	return maxAns;
 }
-vector<int> prevSmaller(vector<int>& nums) {
-	vector<int> res(nums.size());
-	stack<int> st;
-	for (int i = 0; i < nums.size(); i++) {
-		while (!st.empty() && st.top() >= nums[i])
-			st.pop();
-		res[i] = st.empty() ? -1 : st.top();
-		st.push(nums[i]);
-	}
-	return res;
-}
-vector<int> nextSmaller(vector<int>& nums) {
-	vector<int> res(nums.size());
-	stack<int> st;
-	for (int i = nums.size() - 1; i >= 0; i--) {
-		while (!st.empty() && st.top() >= nums[i])
-			st.pop();
-		res[i] = st.empty() ? -1 : st.top();
-		st.push(nums[i]);
-	}
-	return res;
-}
-int largestAreaSubmatrix(vector<vector<int>> matrix) {
-	vector<int> currRow(matrix[0]);
+
+int largestAreaSubmatrix(vector<vector<int>>& matrix) {
+	if (matrix.empty() || matrix[0].empty()) return 0;
+	vector<int> currRow(matrix[0].begin(), matrix[0].end());
 	int maxArea = maxAreaa(currRow);
+
 	for (int i = 1; i < matrix.size(); i++) {
 		for (int j = 0; j < matrix[0].size(); j++) {
 			currRow[j] = matrix[i][j] == 0 ? 0 : currRow[j] + 1;
@@ -641,6 +658,8 @@ int largestAreaSubmatrix(vector<vector<int>> matrix) {
 	}
 	return maxArea;
 }
+
+
 
 int precedence(char c) {
 	if (c == '+' || c == '-')
@@ -808,26 +827,33 @@ class Node {
 	}
 
 };
-Node* constructTree(vector<int> nums) {
+
+Node* buildTree(vector<int>& preorder, vector<int>& inorder) {
+	Node* root = new Node(preorder[0]);
 	stack<Node*> st;
-	for (int i = 0; i < nums.size(); i++) {
-		if (nums[i] == -1) {
-			Node* right = st.top();
+	st.push(root);
+	int i = 1, j = 0;
+	while (i < preorder.size()) {
+		Node* temp = NULL;
+		while (!st.empty() && st.top()->data == inorder[j]) {
+			temp = st.top();
 			st.pop();
-			Node* left = st.top();
-			st.pop();
-			Node* root = new Node(i);
-			root->left = left;
-			root->right = right;
-			st.push(root);
+			j++;
+		}
+		Node* newNode = new Node(preorder[i]);
+		if (temp != NULL) {
+			temp->right = newNode;
 		}
 		else {
-			Node* root = new Node(i);
-			st.push(root);
+			st.top()->left = newNode;
 		}
+		st.push(newNode);
+		i++;
+	
 	}
-	return st.top();
+	return root;
 }
+
 int heightOfTree(Node* root) {
 	if (root == nullptr) return 0;
 	return (1+max(heightOfTree(root->left), heightOfTree(root->right)));
@@ -1002,18 +1028,16 @@ void bottomViewOfBinaryTree(Node* root) {
 	for(auto x:m) cout<<x.second<<" ";
 }// complexity O(nlogn)
 
-void convertToDLL(Node* root) {
+void convertToDLL(Node* root, Node*& prev, Node*& head) {
 	if(root==nullptr) return;
-	static Node* prev = nullptr;
-	static Node* head = nullptr; 
-	convertToDLL(root->left);
+	convertToDLL(root->left, prev, head);
 	if(prev==nullptr) head = root;
 	else {
 		root->left = prev;
 		prev->right = root;
 	}
 	prev = root;
-	convertToDLL(root->right);
+	convertToDLL(root->right, prev, head);
 }// complexity O(n)
 
 int heightOfBinaryTree(Node* root) {
@@ -1032,26 +1056,23 @@ int diameterOfBinaryTree(Node* root) {
 	return max(lh+rh+1, max(ld, rd));
 }// complexity O(n^2)
 
-int diameterOfBinaryTree2(Node* root, int* height) {
-	if (root == nullptr) {
-		*height = 0;
-		return 0;
-	}
-	int lh = 0, rh = 0;
-	int ld = diameterOfBinaryTree2(root->left, &lh);
-	int rd = diameterOfBinaryTree2(root->right, &rh);
-	*height = max(lh, rh) + 1;
-	return max(lh+rh+1, max(ld, rd));
+int diameterOfBinaryTree2(Node* root, int& ans) {
+	if(root==nullptr) return 0;
+	int lh = diameterOfBinaryTree2(root->left, ans);
+	int rh = diameterOfBinaryTree2(root->right, ans);
+	ans = max(ans, lh+rh+1);
+	return max(lh, rh) + 1;
 }// complexity O(n)
 
+
 int lowestCommonAncestor(Node* root, int n1, int n2) {
-	if (root == nullptr) return -1;
+	if(root==nullptr) return NULL;
 	if (root->data == n1 || root->data == n2) return root->data;
 	int left = lowestCommonAncestor(root->left, n1, n2);
 	int right = lowestCommonAncestor(root->right, n1, n2);
-	if (left != -1 && right != -1) return root->data;
-	if (left != -1) return left;
-	else return right;
+	if(left==NULL) return right;
+	if(right==NULL) return left;
+	return root->data;
 }// complexity O(n)
 	
 int timeToBurnTree(Node* root, int leaf, int& res) {
@@ -1135,6 +1156,7 @@ int maxBST(Node* root) {
 	else if (root->right == nullptr) return root->data;
 	else return maxBST(root->right);
 }
+
 int checkValidBST(Node* root) {
 	if (root == nullptr) return 1; // Empty tree is a valid BST
 
@@ -1181,7 +1203,7 @@ int isBST2(Node* root) {
 int isBST3(Node* root, int min, int max) {
 	if (root == nullptr) return 1;
 	if (root->data < min || root->data > max) return 0;
-	return isBST3(root->left, min, root->data - 1) & isBST3(root->right, root->data + 1, max);
+	return isBST3(root->left, min, root->data) & isBST3(root->right, root->data, max);
 }
 
 int isBST4(Node* root, Node* l = nullptr, Node* r = nullptr) {
@@ -1337,26 +1359,6 @@ vector<vector<int>> verticalTraversal(Node* root) {
 	return ans;
 }
 
-void printVerticalOrder(Node* root) {
-	map<int, vector<int>> m;
-	queue<pair<Node*, int>> q;
-	q.push({ root, 0 });
-	while (!q.empty()) {
-		auto p = q.front();
-		q.pop();
-		Node* node = p.first;
-		int hd = p.second;
-		m[hd].push_back(node->data);
-		if (node->left) q.push({ node->left, hd - 1 });
-		if (node->right) q.push({ node->right, hd + 1 });
-	}
-	for (auto x : m) {
-		for (auto y : x.second) {
-			cout << y << " ";
-		}
-		cout << endl;
-	}
-} // complexity O(nlogn)
 
 class AVLTree {
 	Node* root;
@@ -1442,6 +1444,7 @@ class AVLTree {
 		return root;
 	}	
 };
+
 class adjMatrixGraph {
 	int v;
 	int e;
@@ -1594,7 +1597,7 @@ bool cycleInUndirectedGraphUtil(int u, vector<bool>& visited, vector<vector<int>
 	}
 	return false;
 }
-bool cycleInUndirectedGraph(int v, vector<vector<int>> adj) {
+bool cycleInUndirectedGraph(int v, vector<vector<int>> adj) {	
 	vector<bool> visited(v, false);
 	for (int i = 0; i < v; i++) {
 		if (visited[i] == false) {
@@ -1670,85 +1673,42 @@ vector<int> topologicalSortUsingBFS(int v, vector<vector<int>> adj) {
 		}
 	}
 	return res;
-}
+} //khan's algorithm complexity O(V+E)
 
-int spanningTree(vector<vector<vector<int>>>& graph, int v) {
-	vector<bool> visited(v, false);
-	queue<pair<int, int>> q;
-	q.push({ 0, 0 });
-	int cost = 0;
-	while (!q.empty()) {
-		auto p = q.front();
-		q.pop();
-		int u = p.first;
-		int w = p.second;
-
-		if (!visited[u]) {
-			cost += w;
-			visited[u] = true;
-
-			for (const auto& edge : graph[u]) {
-				if (!visited[edge[0]]) {
-					q.push({ edge[0], edge[1] });
-				}
-			}
-		}
+int spanningTree() {
+	int v, e;
+	cin >> v >> e;
+	vector<vector<pair<int, int>>> adj(v);
+	for (int i = 0; i < e; i++) {
+		int u, v, w;
+		cin >> u >> v >> w;
+		adj[u].push_back({ v, w });
+		adj[v].push_back({ u, w });
 	}
-
-	return cost;
-} // complexity O(V+E) prim's algorithm
-int spanningTree2(const vector<vector<vector<int>>>& graph, int v) {
-	unordered_set<int> visited;
-	queue<pair<int, int>> q;
-	q.push({ 0, 0 });
-	int cost = 0;
-
-	while (!q.empty()) {
-		auto p = q.front();
-		q.pop();
-		int u = p.first;
-		int w = p.second;
-
-		if (visited.find(u) == visited.end()) {
-			cost += w;
-			visited.insert(u);
-
-			for (const auto& edge : graph[u]) {
-				if (visited.find(edge[0]) == visited.end()) {
-					q.push({ edge[0], edge[1] });
-				}
-			}
-		}
-	}
-
-	return cost;
-}
-int spanningTree3(const vector<vector<vector<int>>>& graph, int v) {
-	vector<bool> visited(v, false);
 	priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
-	pq.push({ 0, 0 });
+	vector<bool> visited(v, false);
+	int src = 0;
+	visited[src] = true;
+	for (const auto& edge : adj[src]) {
+		pq.push({ edge.second, edge.first });
+	}
 	int cost = 0;
-
 	while (!pq.empty()) {
 		auto p = pq.top();
 		pq.pop();
 		int u = p.second;
 		int w = p.first;
-
-		if (!visited[u]) {
-			cost += w;
+		if (visited[u] == false) {
 			visited[u] = true;
-
-			for (const auto& edge : graph[u]) {
-				if (!visited[edge[0]]) {
-					pq.push({ edge[1], edge[0] });
-				}
+			cost += w;
+			for (const auto& edge : adj[u]) {
+				pq.push({ edge.second, edge.first });
 			}
 		}
 	}
-
 	return cost;
-}
+} // complexity O(ElogV)
+
 
 vector<vector<int>> dijkstra(vector<vector<pair<int, int>>>& graph, int v, int src) {
 	vector<int> dist(v, INT_MAX);
@@ -2512,10 +2472,134 @@ int findMaximumXOR(vector<int>& nums) {
 }
 
 
-
-int main() {
-	
-	
-
+vector<int> factorial(1000, 0);
+int fact(int n) {
+	if (n == 0) return 1;
+	if (factorial[n]) return factorial[n];
+	else {
+		factorial[n] = n * fact(n - 1);
+		return factorial[n];
+	}
 }
+
+int countSubarraysWithSumZero(vector<int>& nums) {
+	unordered_map<int, int> prefixSumCount;
+	int currentSum = 0;
+	int count = 0;
+
+	// Initialize the prefix sum count for sum zero
+	prefixSumCount[0] = 1; // Handles subarrays starting from index 0 that sum to zero
+
+	for (int num : nums) {
+		currentSum += num;
+
+		// Check if currentSum has been seen before
+		if (prefixSumCount.find(currentSum) != prefixSumCount.end()) {
+			count += prefixSumCount[currentSum]; // Each time the currentSum has been seen, it indicates a zero-sum subarray
+		}
+
+		// Update the count of currentSum in the map
+		prefixSumCount[currentSum]++;
+	}
+
+	return count;
+}
+
+vector<std::vector<int>> findSubarraysWithSum(std::vector<int>& nums, int target) {
+	std::unordered_map<int, std::list<int>> prefixSumIndices;
+	int currentSum = 0;
+	std::vector<std::vector<int>> result;
+
+	// Initialize the map to handle the sum starting from the first element
+	prefixSumIndices[0].push_back(-1); // Handles subarray starting from index 0
+
+	for (int i = 0; i < nums.size(); ++i) {
+		currentSum += nums[i];
+
+		// Check if there's a prefix sum that matches currentSum - target
+		int neededSum = currentSum - target;
+		if (prefixSumIndices.find(neededSum) != prefixSumIndices.end()) {
+			// For each starting index that matches the needed sum
+			for (int start : prefixSumIndices[neededSum]) {
+				std::vector<int> subarray(nums.begin() + start + 1, nums.begin() + i + 1);
+				result.push_back(subarray);
+			}
+		}
+
+		// Add the current index to the list of indices for the current prefix sum
+		prefixSumIndices[currentSum].push_back(i);
+	}
+
+	return result;
+}
+
+
+class Solution {
+public:
+	bool canJump(vector<int>& nums) {
+		int n = nums.size();
+		vector<bool> dp(n, false);
+		dp[0] = true;
+
+		for (int i = 0; i < n; ++i) {
+			if (!dp[i]) continue; // If this position is not reachable, skip it
+
+			for (int j = 1; j <= nums[i] && i + j < n; ++j) {
+				dp[i + j] = true;
+			}
+		}
+
+		return dp[n - 1];
+	}
+};
+
+double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2, vector<int>& merge) {
+	//vector<int> merge;
+	int i1 = 0;
+	int i2 = 0;
+	for (int i = 0; i < nums1.size() && i < nums2.size(); i++) {
+		if (nums1[i1] <= nums2[i2]) {
+			merge.push_back(nums1[i1]);
+			i1++;
+		}
+		else {
+			merge.push_back(nums2[i2]);
+			i2++;
+		}
+	} if (i1 != nums1.size()) {
+		for (int i = i1; i < nums1.size(); i++) {
+			merge.push_back(nums1[i]);
+		}
+	} if (i2 != nums2.size()) {
+		for (int i = i2; i < nums2.size(); i++) {
+			merge.push_back(nums2[i]);
+		}
+	}
+	int n = merge.size();
+	/*if (n % 2 == 0) {
+		double median = (double)(merge[n / 2] + merge[(n / 2) - 1]) / (double)2;
+		return median;
+	}
+	else {
+		double median = (double)(merge[(n / 2)]);
+		return median;
+	}*/
+	return 0;
+}
+
+ 
+int main() {
+
+	vector<int> nums = { 3, -3, 1, 4, -4, 0 };
+	cout << "Number of subarrays with sum zero: " << countSubarraysWithSumZero(nums) << std::endl;
+	return 0;
+	
+}
+
+
+
+
+
+
+
 
